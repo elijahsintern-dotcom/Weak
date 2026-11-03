@@ -6,9 +6,7 @@ import { MUSCLES, SET_TYPE_SHORT, type Exercise, type Muscle, type Session, type
 import { dimsLabel } from '../db/variants';
 import { ExerciseForm } from '../components/ExercisePicker';
 import { LineChart, SERIES_COLORS, type Series } from '../components/LineChart';
-import { Markdown } from '../components/Markdown';
 import { GymBadge, PageHead, Seg, Sheet, toast, useGyms } from '../components/ui';
-import { BUNDLED_NOTES } from '../notes';
 import { computePRs, e1rm, effectiveLoad, fmtKg, fmtLoad, setReps, volumeLoad } from '../lib/metrics';
 import { fmtDate } from '../lib/format';
 import { navigate } from '../router';
@@ -70,7 +68,6 @@ export function ExercisesScreen() {
                   {data?.used.get(e.id)?.size ? ` · ${data.used.get(e.id)!.size} ${data.used.get(e.id)!.size === 1 ? 'workout' : 'workouts'}` : ''}
                 </div>
               </div>
-              {BUNDLED_NOTES[e.id] ? <span className="tag">Notes</span> : null}
             </a>
           ))}
         </div>
@@ -361,96 +358,21 @@ function PRList({ stat, ex }: { stat: VariantStats; ex: Exercise }) {
   );
 }
 
-function NotesTab({ ex, notes }: { ex: Exercise; notes: { id: string; kind: 'personal' | 'science'; markdown: string; bundledVersion: number | null }[] }) {
-  const bundled = BUNDLED_NOTES[ex.id];
-  const userScience = notes.find((n) => n.kind === 'science');
+function NotesTab({ ex, notes }: { ex: Exercise; notes: { id: string; kind: 'personal' | 'science'; markdown: string }[] }) {
   const personal = notes.find((n) => n.kind === 'personal');
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState('');
-  const [pDraft, setPDraft] = useState(personal?.markdown ?? '');
-  const science = userScience?.markdown ?? bundled?.markdown;
-  const outdated = userScience && bundled && (userScience.bundledVersion ?? 0) < bundled.version;
-
-  const saveScience = async () => {
-    await db.notes.put({ id: userScience?.id ?? uuidv7(), exerciseId: ex.id, kind: 'science', markdown: draft, bundledVersion: bundled?.version ?? null, updatedAt: isoLocal() });
-    setEditing(false);
-    toast('Note saved');
-  };
-
+  const [draft, setDraft] = useState(personal?.markdown ?? '');
   return (
     <>
-      <h3>Science note</h3>
-      {outdated ? (
-        <div className="banner small">
-          The bundled note was updated since you edited it.{' '}
-          <button
-            className="btn small"
-            onClick={async () => {
-              if (confirm('Replace your edited version with the updated bundled note?')) await db.notes.delete(userScience.id);
-            }}
-          >
-            Use updated note
-          </button>
-        </div>
-      ) : null}
-      {editing ? (
-        <>
-          <textarea value={draft} onChange={(e) => setDraft(e.target.value)} style={{ minHeight: 320, fontFamily: 'ui-monospace, monospace', fontSize: 13 }} />
-          <div className="row">
-            <button className="btn ghost" onClick={() => setEditing(false)}>
-              Cancel
-            </button>
-            {userScience ? (
-              <button
-                className="btn danger"
-                onClick={async () => {
-                  await db.notes.delete(userScience.id);
-                  setEditing(false);
-                }}
-              >
-                Revert to bundled
-              </button>
-            ) : null}
-            <button className="btn primary grow" onClick={saveScience}>
-              Save note
-            </button>
-          </div>
-        </>
-      ) : science ? (
-        <>
-          <Markdown text={science} />
-          <button
-            className="btn small"
-            onClick={() => {
-              setDraft(science);
-              setEditing(true);
-            }}
-          >
-            Edit note
-          </button>
-        </>
-      ) : (
-        <div className="empty small">
-          No science note for this exercise yet.{' '}
-          <button
-            className="btn small"
-            onClick={() => {
-              setDraft('## Muscles trained\n\n## Resistance profile\n\n## Technique cues\n\n## Common errors\n\n## Variants compared\n\n## Programming\n\n## Evidence\n');
-              setEditing(true);
-            }}
-          >
-            Write one
-          </button>
-        </div>
-      )}
-
-      <h3>Personal notes</h3>
+      <h3>Notes</h3>
       <textarea
-        value={pDraft}
+        value={draft}
         placeholder="Cues that work for you, machine settings, seat height…"
-        onChange={(e) => setPDraft(e.target.value)}
+        style={{ minHeight: 200 }}
+        onChange={(e) => setDraft(e.target.value)}
         onBlur={() =>
-          db.notes.put({ id: personal?.id ?? uuidv7(), exerciseId: ex.id, kind: 'personal', markdown: pDraft, bundledVersion: null, updatedAt: isoLocal() })
+          db.notes
+            .put({ id: personal?.id ?? uuidv7(), exerciseId: ex.id, kind: 'personal', markdown: draft, bundledVersion: null, updatedAt: isoLocal() })
+            .then(() => toast('Notes saved'))
         }
       />
     </>

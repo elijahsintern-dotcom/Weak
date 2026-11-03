@@ -7,7 +7,7 @@ A personal, offline workout logger for lifting. It runs as an installable web ap
 - **Variants have their own history.** A variant is a base exercise + variation dimensions (laterality, grip, attachment, cable path, bench angle, position, ROM, tempo) + the gym. *Seated Cable Row · Unilateral · D-handle · Home* and *Seated Cable Row · Standard · Downtown* are tracked as separate progressions with separate PRs.
 - **Gyms are first-class.** Create any number of gyms in the app. Cable stacks differ between gyms, so loads are never compared across them.
 - **Unlimited templates** with folders, targets (sets, rep range, RIR, rest) and a double-progression flag.
-- **Science notes** per exercise (bundled Markdown in `src/notes/`, editable in the app), plus personal notes.
+- **Personal notes** per exercise.
 - **Export that is easy to parse:** a tidy CSV with one row per set and every variation as a column, and a versioned JSON backup that restores exactly.
 - **Import from a Strong CSV export,** with a mapping step for exercises, gyms and variations.
 
